@@ -68,10 +68,10 @@ bspPlanning::bspPlanner<stateVec>::bspPlanner(const ros::NodeHandle& nh, const r
   //Subscribers
   posClient_ = nh_.subscribe("pose", 10, &bspPlanning::bspPlanner<stateVec>::posCallback, this);
   odomClient_ = nh_.subscribe("odometry", 10, &bspPlanning::bspPlanner<stateVec>::odomCallback, this);
-  pointcloud_0_sub_ = nh_.subscribe("pointcloud_0_throttled", 1, &bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf, this);
-  pointcloud_1_sub_ = nh_.subscribe("pointcloud_1_throttled", 1, &bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf, this);
-  pointcloud_2_sub_ = nh_.subscribe("pointcloud_2_throttled", 1, &bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf, this);
-  pointcloud_3_sub_ = nh_.subscribe("pointcloud_3_throttled", 1, &bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf, this);
+  pointcloud_0_sub_ = nh_.subscribe("pointcloud_0_throttled", 1, &bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf_0, this);
+  pointcloud_1_sub_ = nh_.subscribe("pointcloud_1_throttled", 1, &bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf_1, this);
+  pointcloud_2_sub_ = nh_.subscribe("pointcloud_2_throttled", 1, &bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf_2, this);
+  pointcloud_3_sub_ = nh_.subscribe("pointcloud_3_throttled", 1, &bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf_3, this);
 
   if (!setParams()) {
     ROS_ERROR("bsp_planner(ctor): Could not start the planner, parameters missing...");
@@ -495,11 +495,11 @@ bool bspPlanning::bspPlanner<stateVec>::setParams()
 }
 
 template<typename stateVec>
-void bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
+void bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf_0(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
 {
   static double last = ros::Time::now().toSec();
   if (last + params_.pcl_throttle_ < ros::Time::now().toSec()) {
-    tree_->insertPointcloudWithTf(pointcloud);
+    tree_->insertPointcloudWithTf(pointcloud, true);
     last += params_.pcl_throttle_;
  
     //Bsp: Free planning space until 1st planning success (5*overshoot should be enough)
@@ -508,7 +508,52 @@ void bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf(const sensor_msgs
       tree_->clearRootStateBBX(boundingBoxSize,params_.softStartMinZ_);
     }
   }
+}
 
+template<typename stateVec>
+void bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf_1(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
+{
+  static double last = ros::Time::now().toSec();
+  if (last + params_.pcl_throttle_ < ros::Time::now().toSec()) {
+    tree_->insertPointcloudWithTf(pointcloud, true);
+    last += params_.pcl_throttle_;
+ 
+    //Bsp: Free planning space until 1st planning success (5*overshoot should be enough)
+    if (params_.softStart_ && init_state_ <= BSP_INITSTATE_NEEDBBXCLEARANCETOPLAN){
+      Eigen::Vector3d boundingBoxSize(params_.boundingBox_[0]+params_.dOvershoot_*5,params_.boundingBox_[1]+params_.dOvershoot_*5,params_.boundingBox_[2]+params_.dOvershoot_*5);
+      tree_->clearRootStateBBX(boundingBoxSize,params_.softStartMinZ_);
+    }
+  }
+}
+template<typename stateVec>
+void bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf_2(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
+{
+  static double last = ros::Time::now().toSec();
+  if (last + params_.pcl_throttle_ < ros::Time::now().toSec()) {
+    tree_->insertPointcloudWithTf(pointcloud, true);
+    last += params_.pcl_throttle_;
+ 
+    //Bsp: Free planning space until 1st planning success (5*overshoot should be enough)
+    if (params_.softStart_ && init_state_ <= BSP_INITSTATE_NEEDBBXCLEARANCETOPLAN){
+      Eigen::Vector3d boundingBoxSize(params_.boundingBox_[0]+params_.dOvershoot_*5,params_.boundingBox_[1]+params_.dOvershoot_*5,params_.boundingBox_[2]+params_.dOvershoot_*5);
+      tree_->clearRootStateBBX(boundingBoxSize,params_.softStartMinZ_);
+    }
+  }
+}
+template<typename stateVec>
+void bspPlanning::bspPlanner<stateVec>::insertPointcloudWithTf_3(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
+{
+  static double last = ros::Time::now().toSec();
+  if (last + params_.pcl_throttle_ < ros::Time::now().toSec()) {
+    tree_->insertPointcloudWithTf(pointcloud, true);
+    last += params_.pcl_throttle_;
+ 
+    //Bsp: Free planning space until 1st planning success (5*overshoot should be enough)
+    if (params_.softStart_ && init_state_ <= BSP_INITSTATE_NEEDBBXCLEARANCETOPLAN){
+      Eigen::Vector3d boundingBoxSize(params_.boundingBox_[0]+params_.dOvershoot_*5,params_.boundingBox_[1]+params_.dOvershoot_*5,params_.boundingBox_[2]+params_.dOvershoot_*5);
+      tree_->clearRootStateBBX(boundingBoxSize,params_.softStartMinZ_);
+    }
+  }
 }
 
 #endif // BSP_HPP_

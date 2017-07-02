@@ -102,9 +102,10 @@ class bspPlanner
   void posCallback(const geometry_msgs::PoseWithCovarianceStamped& pose);
   void odomCallback(const nav_msgs::Odometry& pose);
   bool plannerCallback(bsp_planner::bsp_srv::Request& req, bsp_planner::bsp_srv::Response& res);
-  void insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
-  void insertPointcloudWithTfCamUp(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
-  void insertPointcloudWithTfCamDown(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
+  void insertPointcloudWithTf_0(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
+  void insertPointcloudWithTf_1(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
+  void insertPointcloudWithTf_2(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
+  void insertPointcloudWithTf_3(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
 };
 }
 

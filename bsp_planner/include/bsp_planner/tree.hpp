@@ -103,9 +103,62 @@ bool bspPlanning::TreeBase<stateVec>::reGainFound()
 }
 
 template<typename stateVec>
-void bspPlanning::TreeBase<stateVec>::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
+void bspPlanning::TreeBase<stateVec>::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud, bool localCheck)
 {
-  manager_->insertPointcloudWithTf(pointcloud);
+  if (!localCheck){
+    manager_->insertPointcloudWithTf(pointcloud);
+  }
+  else{
+    sensor_msgs::PointCloud2Ptr pointcloudFiltered = boost::make_shared<sensor_msgs::PointCloud2>();
+    pointcloudFiltered->header = pointcloud->header;
+    //pointcloudFiltered->height = pointcloud->height;
+    //pointcloudFiltered->width = pointcloud->width;
+    //pointcloudFiltered->is_dense = pointcloud->is_dense;
+    pointcloudFiltered->is_bigendian = pointcloud->is_bigendian;
+    size_t STEPSIZE = pointcloud->point_step;
+    pointcloudFiltered->point_step = STEPSIZE;
+    //pointcloudFiltered->row_step = pointcloud->row_step;
+    size_t FIELDSIZE =pointcloud->fields.size();
+    pointcloudFiltered->fields.resize(FIELDSIZE);
+    for (size_t i=0; i<FIELDSIZE; ++i){
+      //TODO: verify that fields[0].name=="x" && fields[1].name=="y" && fields[2].name=="z" && fields[0,1,2].datatype==sensor_msgs::PointField::FLOAT32;
+      pointcloudFiltered->fields[i].name = pointcloud->fields[i].name;
+      pointcloudFiltered->fields[i].offset = pointcloud->fields[i].offset;
+      pointcloudFiltered->fields[i].datatype = pointcloud->fields[i].datatype;
+      pointcloudFiltered->fields[i].count = pointcloud->fields[i].count;
+    }
+    size_t PAYLOADSIZE = STEPSIZE - 3 * sizeof(float);  //extra payload apart from x,y,z - combine with TODO above
+    size_t DATASIZE = pointcloud->data.size();
+    pointcloudFiltered->data.resize(DATASIZE);
+    float x_in, y_in, z_in;
+    size_t offset_out = 0;
+    for (size_t offset_in = 0; offset_in < DATASIZE; offset_in += STEPSIZE)
+    {
+      memcpy(&x_in, &pointcloud->data[offset_in], sizeof(float)); 
+      memcpy(&y_in, &pointcloud->data[offset_in+4], sizeof(float)); 
+      memcpy(&z_in, &pointcloud->data[offset_in+8], sizeof(float)); 
+      if ( !pcl_isfinite(x_in) || !pcl_isfinite(y_in) || !pcl_isfinite(z_in) ||
+           z_in<=0.0f ){
+        continue;
+      }
+      else{
+        memcpy(&pointcloudFiltered->data[offset_out], &x_in, sizeof(float)); 
+        memcpy(&pointcloudFiltered->data[offset_out+4], &y_in, sizeof(float)); 
+        memcpy(&pointcloudFiltered->data[offset_out+8], &z_in, sizeof(float)); 
+        memcpy(&pointcloudFiltered->data[offset_out+12], &pointcloud->data[offset_in+12], PAYLOADSIZE); 
+        offset_out += STEPSIZE;
+      }
+    }
+    if (offset_out != DATASIZE)
+    {
+      pointcloudFiltered->data.resize(offset_out);
+    }
+    pointcloudFiltered->height = 1;
+    pointcloudFiltered->width = static_cast<uint32_t>( offset_out / STEPSIZE );
+    pointcloudFiltered->row_step = static_cast<uint32_t>( offset_out );
+    pointcloudFiltered->is_dense = true;
+    manager_->insertPointcloudWithTf(pointcloudFiltered);
+  }
 }
 
 template<typename stateVec>

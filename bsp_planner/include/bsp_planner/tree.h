@@ -218,7 +218,7 @@ class TreeBase
   bool reGainFound();
   void setParams(Params params);
 
-  void insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
+  void insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud, bool localCheck=false);
 };
 }
 
